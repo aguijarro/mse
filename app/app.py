@@ -153,8 +153,9 @@ def generate_sample_data(df_for_sample, number_of_rows, cost_weight,
 
     # Calculate the percentage of the total
     total_sum = grouped_df['SumValue'].sum()
-    grouped_df['Percentage'] = (grouped_df['SumValue'] / total_sum) * 100
+    grouped_df['% of orders won'] = (grouped_df['SumValue'] / total_sum) * 100
 
+    grouped_df = grouped_df.rename(columns={"Count": "Number of order won", "SumValue": "Total order amount $"})
 
     # Apply the highlight_max function to the dataframe
     df_sample.reset_index(inplace=True)
