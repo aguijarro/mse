@@ -55,6 +55,7 @@ def add_vendor_scores(df, config, vendors):
 
 def add_vendor_columns(df, config, vendor):
     for score_type, scores in config.items():
+        # Shipping speed need a calculation see: calculate_shipping_scores method
         if score_type != "average_shipping_speed":
             column_name = f"{score_type}_{vendor}"
             score = scores.get(vendor, 0)
@@ -109,9 +110,7 @@ def generate_sample_data(df_for_sample, number_of_rows, cost_weight,
     returnability_values = ['Yes', 'No']
     shipping_speed_values = ['same day', '1 day', '2 days', '3 days', '4 days+']
 
-    df_sample = df_for_sample.sample(int(number_of_rows), weights='Installs', random_state=1)
-    # df_sample['returnability'] = np.random.choice(returnability_values, size=len(df_sample))
-    # df_sample['shipping_speed_values'] = np.random.choice(shipping_speed_values, size=len(df_sample))
+    df_sample = df_for_sample.sample(int(number_of_rows), replace=True, weights='Installs', random_state=1)
 
     # Add scores to the dataframe
     df_sample = add_vendor_scores(df_sample, vendors_attributes, vendors_list)
@@ -134,6 +133,7 @@ def generate_sample_data(df_for_sample, number_of_rows, cost_weight,
         value_name="Value")
 
     # Apply the highlight_max function to the dataframe
+    df_sample.reset_index(inplace=True)
     df_sample = df_sample.style.apply(highlight_max, subset=[f"total_score_{vendor}" for vendor in vendors_list],
                                       axis=1)
 
