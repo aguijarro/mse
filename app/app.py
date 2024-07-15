@@ -13,24 +13,21 @@ vendors_attributes = {
         "Marcone": 100,
         "Encompass": 100,
         "ItemMaster": 50,
-        "Reliable": 50,
-        "Tribbles": 50
+        "Reliable": 50
     },
     "average_shipping_speed": {
         "Marcone": 2,
         "Encompass": 4,
         "Amazon": 1,
         "ItemMaster": 5,
-        "Reliable": 4,
-        "Tribbles": 4
+        "Reliable": 4
     },
     "returnability_score": {
         "Amazon": 100,
         "Marcone": 100,
         "Encompass": 100,
         "ItemMaster": 0,
-        "Reliable": 0,
-        "Tribbles": 0
+        "Reliable": 0
     }
 }
 
@@ -107,10 +104,9 @@ def generate_sample_data(df_for_sample, number_of_rows, cost_weight,
                          shipping_speed_weight, returnability_weight, vendor_trust_weight,
                          same_day_parameter, day_1_parameter, day_2_parameter, day_3_parameter,
                          day_4_parameter):
-    returnability_values = ['Yes', 'No']
-    shipping_speed_values = ['same day', '1 day', '2 days', '3 days', '4 days+']
 
-    df_sample = df_for_sample.sample(int(number_of_rows), replace=True, weights='Installs', random_state=1)
+    # Sample the source file based on the number of Installs
+    df_sample = df_for_sample.sample(int(number_of_rows), replace=True, weights='Installs')
 
     # Add scores to the dataframe
     df_sample = add_vendor_scores(df_sample, vendors_attributes, vendors_list)
@@ -164,6 +160,12 @@ def main():
     # Main Content
 
     st.title('Multisourcing Decision Engine')
+    st.markdown("""Current known limitations:  
+                - We do not generate OEM parts only orders  
+                - One part per order  
+
+                """)
+    st.markdown("Parameters", help=str(vendors_attributes))
 
     # st.header("Upload your CSV data file")
     uploaded_file = st.file_uploader("Upload CSV", type=["csv"])
