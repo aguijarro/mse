@@ -3,6 +3,9 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 
+# Maximum number of orders a user can simulate
+max_orders_simulation = 2000
+
 # List of vendors
 vendors_list = ['Encompass', 'Marcone', 'Reliable', 'Amazon', 'ItemMaster']
 
@@ -161,10 +164,10 @@ def main():
     # Main Content
 
     st.title('Multisourcing Decision Engine')
-    st.markdown("""Current known limitations:  
+    st.markdown(f"""Current known limitations:  
                 - We do not generate OEM parts only orders  
                 - One part per order  
-
+                - Maximum number of orders is {max_orders_simulation}
                 """)
     st.markdown("Parameters", help=str(vendors_attributes))
 
@@ -186,7 +189,7 @@ def main():
             ]
 
             # Check if all input parameters are provided and valid
-            if all(input_params) and int(number_of_orders) > 0:
+            if all(input_params) and int(number_of_orders) > 0 and int(number_of_orders) <= max_orders_simulation:
                 # Create sample data
 
                 sample_df, result_table_df = generate_sample_data(
@@ -204,7 +207,7 @@ def main():
 
             else:
                 st.write(
-                    "Please provide valid inputs for all parameters and ensure the number of parts is greater than zero.")
+                    f"Please provide valid inputs for all parameters and ensure the number of parts is greater than zero. Maximum number of orders is {max_orders_simulation}.")
 
 
 if __name__ == "__main__":
