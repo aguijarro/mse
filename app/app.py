@@ -127,17 +127,42 @@ def generate_sample_data(df_for_sample, number_of_rows, cost_weight,
     df_sample = calculate_total_score_calculation(df_sample, vendors_list, cost_weight, shipping_speed_weight,
                                                   returnability_weight, vendor_trust_weight)
 
-    df_partial_result = df_sample[['Part', 'Title'] + [f"total_score_{vendor}" for vendor in vendors_list]]
-    df_result_table = df_partial_result.melt(
-        id_vars=['Part', 'Title'],
-        var_name="Order Won",
+    df_partial_result_total_score = df_sample[['Part'] + [f"total_score_{vendor}" for vendor in vendors_list]]
+    df_partial_result_cost = df_sample[['Part'] + [f"{vendor}" for vendor in vendors_list]]
+
+    df_result_table_total_score = df_partial_result_total_score.melt(
+        id_vars=['Part'],
+        var_name="Vendor",
         value_name="Value")
+
+    df_result_table_total_score['Vendor'] = df_result_table_total_score['Vendor'].apply(lambda x: x.replace('total_score_', ''))
+
+    df_result_table_cost = df_partial_result_cost.melt(
+        id_vars=['Part'],
+        var_name="Vendor",
+        value_name="Value")
+
+    df_result_table = pd.merge(df_result_table_total_score, df_result_table_cost, on=['Part', 'Vendor'], how='left')
+
+    idx = df_result_table.groupby('Part')['Value_x'].idxmax()
+    df_result = df_result_table.loc[idx]
+
+    # Group by Vendor and perform aggregations
+    grouped_df = df_result.groupby('Vendor').agg(
+        Count=('Vendor', 'size'),
+        SumValue=('Value_y', 'sum')
+    ).reset_index()
+
+    # Calculate the percentage of the total
+    total_sum = grouped_df['SumValue'].sum()
+    grouped_df['Percentage'] = (grouped_df['SumValue'] / total_sum) * 100
+
 
     # Apply the highlight_max function to the dataframe
     df_sample = df_sample.style.apply(highlight_max, subset=[f"total_score_{vendor}" for vendor in vendors_list],
                                       axis=1)
 
-    return df_sample, df_result_table
+    return df_sample, grouped_df
 
 
 def main():
