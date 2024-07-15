@@ -103,10 +103,10 @@ def highlight_max(s):
 def generate_sample_data(df_for_sample, number_of_rows, cost_weight,
                          shipping_speed_weight, returnability_weight, vendor_trust_weight,
                          same_day_parameter, day_1_parameter, day_2_parameter, day_3_parameter,
-                         day_4_parameter):
+                         day_4_parameter, random_seed):
 
     # Sample the source file based on the number of Installs
-    df_sample = df_for_sample.sample(int(number_of_rows), replace=True, weights='Installs')
+    df_sample = df_for_sample.sample(int(number_of_rows), replace=True, weights='Installs', random_state=int(random_seed))
 
     # Add scores to the dataframe
     df_sample = add_vendor_scores(df_sample, vendors_attributes, vendors_list)
@@ -143,6 +143,7 @@ def main():
 
     st.sidebar.markdown("### Orders Generator")
     number_of_orders = st.sidebar.text_input(label="Number of Orders", value="100", key="Number of Orders")
+    random_seed = st.sidebar.text_input(label="Random Seed", value="1", key="Random Seed")
 
     st.sidebar.markdown("### Criteria Weights")
     cost_weight = st.sidebar.text_input(label="Price", value="45", key="Price")
@@ -181,7 +182,7 @@ def main():
             input_params = [
                 number_of_orders, cost_weight, shipping_speed_weight,
                 returnability_weight, vendor_trust_weight, same_day_parameter, day_1_parameter,
-                day_2_parameter, day_3_parameter, day_4_parameter
+                day_2_parameter, day_3_parameter, day_4_parameter, random_seed
             ]
 
             # Check if all input parameters are provided and valid
@@ -191,7 +192,7 @@ def main():
                 sample_df, result_table_df = generate_sample_data(
                     df, number_of_orders, cost_weight, shipping_speed_weight,
                     returnability_weight, vendor_trust_weight, same_day_parameter, day_1_parameter,
-                    day_2_parameter, day_3_parameter, day_4_parameter
+                    day_2_parameter, day_3_parameter, day_4_parameter, random_seed
                 )
                 st.markdown("***")
                 st.write("Calculations Data:")
