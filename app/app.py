@@ -5,7 +5,7 @@ import numpy as np
 from datetime import datetime
 
 # List of vendors
-vendors_list = ['Encompass', 'Marcone', 'Reliable']
+vendors_list = ['Encompass', 'Marcone', 'Reliable', 'Amazon', 'ItemMaster']
 
 # Score of Vendors
 vendors_score = {
@@ -13,6 +13,7 @@ vendors_score = {
         "Amazon": 10,
         "Marcone": 10,
         "Encompass": 10,
+        "ItemMaster": 5,
         "Reliable": 5,
         "Tribbles": 5
     },
@@ -20,6 +21,7 @@ vendors_score = {
         "Marcone": 25,
         "Encompass": 25,
         "Amazon": 0,
+        "ItemMaster": 0,
         "Reliable": 0,
         "Tribbles": 0
     },
@@ -27,6 +29,7 @@ vendors_score = {
         "Amazon": 100,
         "Marcone": 100,
         "Encompass": 100,
+        "ItemMaster": 0,
         "Reliable": 0,
         "Tribbles": 0
     }
@@ -40,7 +43,7 @@ def transform_column(column):
 
 
 def transform_uploaded_file(df_uploaded_file):
-    for column_name in ['Encompass', 'Marcone', 'Reliable']:
+    for column_name in ['Encompass', 'Marcone', 'Reliable', 'Amazon']:
         df_uploaded_file[column_name] = transform_column(df_uploaded_file[column_name])
     return df_uploaded_file
 
@@ -116,10 +119,17 @@ def generate_sample_data(df_for_sample, number_of_rows, cost_weight,
     # Calculate total scores
     df_sample = calculate_total_score_calculation(df_sample, vendors_list, cost_weight, shipping_speed_weight,
                                       returnability_weight, vendor_trust_weight)
+
+    df_partial_result = df_sample[['order_id', 'Part', 'Title'] + [f"total_score_{vendor}" for vendor in vendors_list]]
+    df_result_table = df_partial_result.melt(
+        id_vars=['order_id', 'Part', 'Title'],
+        var_name="% Order Won",
+        value_name="Value")
+
     # Apply the highlight_max function to the dataframe
     df_sample = df_sample.style.apply(highlight_max, subset=[f"total_score_{vendor}" for vendor in vendors_list], axis=1)
 
-    return df_sample
+    return df_sample, df_result_table
 
 
 def main():
@@ -179,7 +189,8 @@ def main():
             # Check if all input parameters are provided and valid
             if all(input_params) and int(number_of_parts) > 0:
                 # Create sample data
-                sample_df = generate_sample_data(
+
+                sample_df, result_table_df = generate_sample_data(
                     df, number_of_parts, cost_weight, shipping_speed_weight,
                     returnability_weight, vendor_trust_weight, technicians_number_parameter,
                     days_number_parameter, same_day_parameter, day_1_parameter,
@@ -187,6 +198,10 @@ def main():
                 )
                 st.write("Sample DataFrame:")
                 st.dataframe(sample_df)
+
+                st.write("Result Table:")
+                st.dataframe(result_table_df)
+
             else:
                 st.write(
                     "Please provide valid inputs for all parameters and ensure the number of parts is greater than zero.")
