@@ -15,8 +15,8 @@ vendors_attributes = {
         "Amazon": 100,
         "Marcone": 100,
         "Encompass": 100,
-        "ItemMaster": 50,
-        "Reliable": 50
+        "ItemMaster": 100,
+        "Reliable": 100
     },
     "average_shipping_speed": {
         "Marcone": 2,
@@ -26,9 +26,9 @@ vendors_attributes = {
         "Reliable": 4
     },
     "returnability_score": {
-        "Amazon": 100,
-        "Marcone": 100,
-        "Encompass": 100,
+        "Amazon": 0,
+        "Marcone": 0,
+        "Encompass": 0,
         "ItemMaster": 0,
         "Reliable": 0
     }
@@ -165,6 +165,7 @@ def main():
 
     st.title('Multisourcing Decision Engine')
     st.markdown(f"""Current known limitations:  
+                - We do not use the Item Master vendor information to change the trust score
                 - We do not generate OEM parts only orders  
                 - One part per order  
                 - Maximum number of orders is {max_orders_simulation}
