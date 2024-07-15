@@ -3,6 +3,9 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 
+# Maximum number of orders a user can simulate
+max_orders_simulation = 2000
+
 # List of vendors
 vendors_list = ['Encompass', 'Marcone', 'Reliable', 'Amazon', 'ItemMaster']
 
@@ -12,25 +15,22 @@ vendors_attributes = {
         "Amazon": 100,
         "Marcone": 100,
         "Encompass": 100,
-        "ItemMaster": 50,
-        "Reliable": 50,
-        "Tribbles": 50
+        "ItemMaster": 100,
+        "Reliable": 100
     },
     "average_shipping_speed": {
         "Marcone": 2,
         "Encompass": 4,
         "Amazon": 1,
         "ItemMaster": 5,
-        "Reliable": 4,
-        "Tribbles": 4
+        "Reliable": 4
     },
     "returnability_score": {
-        "Amazon": 100,
-        "Marcone": 100,
-        "Encompass": 100,
+        "Amazon": 0,
+        "Marcone": 0,
+        "Encompass": 0,
         "ItemMaster": 0,
-        "Reliable": 0,
-        "Tribbles": 0
+        "Reliable": 0
     }
 }
 
@@ -55,6 +55,7 @@ def add_vendor_scores(df, config, vendors):
 
 def add_vendor_columns(df, config, vendor):
     for score_type, scores in config.items():
+        # Shipping speed need a calculation see: calculate_shipping_scores method
         if score_type != "average_shipping_speed":
             column_name = f"{score_type}_{vendor}"
             score = scores.get(vendor, 0)
@@ -105,13 +106,10 @@ def highlight_max(s):
 def generate_sample_data(df_for_sample, number_of_rows, cost_weight,
                          shipping_speed_weight, returnability_weight, vendor_trust_weight,
                          same_day_parameter, day_1_parameter, day_2_parameter, day_3_parameter,
-                         day_4_parameter):
-    returnability_values = ['Yes', 'No']
-    shipping_speed_values = ['same day', '1 day', '2 days', '3 days', '4 days+']
+                         day_4_parameter, random_seed):
 
-    df_sample = df_for_sample.sample(int(number_of_rows), weights='Installs', random_state=1)
-    # df_sample['returnability'] = np.random.choice(returnability_values, size=len(df_sample))
-    # df_sample['shipping_speed_values'] = np.random.choice(shipping_speed_values, size=len(df_sample))
+    # Sample the source file based on the number of Installs
+    df_sample = df_for_sample.sample(int(number_of_rows), replace=True, weights='Installs', random_state=int(random_seed))
 
     # Add scores to the dataframe
     df_sample = add_vendor_scores(df_sample, vendors_attributes, vendors_list)
@@ -159,6 +157,7 @@ def generate_sample_data(df_for_sample, number_of_rows, cost_weight,
 
 
     # Apply the highlight_max function to the dataframe
+    df_sample.reset_index(inplace=True)
     df_sample = df_sample.style.apply(highlight_max, subset=[f"total_score_{vendor}" for vendor in vendors_list],
                                       axis=1)
 
@@ -172,6 +171,7 @@ def main():
 
     st.sidebar.markdown("### Orders Generator")
     number_of_orders = st.sidebar.text_input(label="Number of Orders", value="100", key="Number of Orders")
+    random_seed = st.sidebar.text_input(label="Random Seed", value="1", key="Random Seed")
 
     st.sidebar.markdown("### Criteria Weights")
     cost_weight = st.sidebar.text_input(label="Price", value="45", key="Price")
@@ -189,6 +189,13 @@ def main():
     # Main Content
 
     st.title('Multisourcing Decision Engine')
+    st.markdown(f"""Current known limitations:  
+                - We do not use the Item Master vendor information to change the trust score
+                - We do not generate OEM parts only orders  
+                - One part per order  
+                - Maximum number of orders is {max_orders_simulation}
+                """)
+    st.markdown("Parameters", help=str(vendors_attributes))
 
     # st.header("Upload your CSV data file")
     uploaded_file = st.file_uploader("Upload CSV", type=["csv"])
@@ -204,17 +211,17 @@ def main():
             input_params = [
                 number_of_orders, cost_weight, shipping_speed_weight,
                 returnability_weight, vendor_trust_weight, same_day_parameter, day_1_parameter,
-                day_2_parameter, day_3_parameter, day_4_parameter
+                day_2_parameter, day_3_parameter, day_4_parameter, random_seed
             ]
 
             # Check if all input parameters are provided and valid
-            if all(input_params) and int(number_of_orders) > 0:
+            if all(input_params) and int(number_of_orders) > 0 and int(number_of_orders) <= max_orders_simulation:
                 # Create sample data
 
                 sample_df, result_table_df = generate_sample_data(
                     df, number_of_orders, cost_weight, shipping_speed_weight,
                     returnability_weight, vendor_trust_weight, same_day_parameter, day_1_parameter,
-                    day_2_parameter, day_3_parameter, day_4_parameter
+                    day_2_parameter, day_3_parameter, day_4_parameter, random_seed
                 )
                 st.markdown("***")
                 st.write("Calculations Data:")
@@ -226,7 +233,7 @@ def main():
 
             else:
                 st.write(
-                    "Please provide valid inputs for all parameters and ensure the number of parts is greater than zero.")
+                    f"Please provide valid inputs for all parameters and ensure the number of parts is greater than zero. Maximum number of orders is {max_orders_simulation}.")
 
 
 if __name__ == "__main__":
