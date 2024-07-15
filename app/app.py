@@ -16,13 +16,13 @@ vendors_attributes = {
         "Reliable": 50,
         "Tribbles": 50
     },
-    "shipping_speed_score": {
-        "Marcone": 25,
-        "Encompass": 25,
-        "Amazon": 0,
-        "ItemMaster": 0,
-        "Reliable": 0,
-        "Tribbles": 0
+    "average_shipping_speed": {
+        "Marcone": 2,
+        "Encompass": 4,
+        "Amazon": 1,
+        "ItemMaster": 5,
+        "Reliable": 4,
+        "Tribbles": 4
     },
     "returnability_score": {
         "Amazon": 100,
@@ -55,9 +55,26 @@ def add_vendor_scores(df, config, vendors):
 
 def add_vendor_columns(df, config, vendor):
     for score_type, scores in config.items():
-        column_name = f"{score_type}_{vendor}"
-        score = scores.get(vendor, 0)
-        df[column_name] = score / 100
+        if score_type != "average_shipping_speed":
+            column_name = f"{score_type}_{vendor}"
+            score = scores.get(vendor, 0)
+            df[column_name] = score / 100
+
+
+def calculate_shipping_scores(df, vendors, same_day_parameter, day_1_parameter, day_2_parameter, day_3_parameter, day_4_parameter):
+    for vendor in vendors:
+        shipping_score_col = f"shipping_score_{vendor}"
+        if vendors_attributes["average_shipping_speed"][vendor] == 0:
+            df[shipping_score_col] = int(same_day_parameter)/100
+        elif vendors_attributes["average_shipping_speed"][vendor] == 1:
+            df[shipping_score_col] = int(day_1_parameter)/100
+        elif vendors_attributes["average_shipping_speed"][vendor] == 2:
+            df[shipping_score_col] = int(day_2_parameter)/100
+        elif vendors_attributes["average_shipping_speed"][vendor] == 3:
+            df[shipping_score_col] = int(day_3_parameter)/100
+        else:
+            df[shipping_score_col] = int(day_4_parameter)/100
+    return df
 
 
 def calculate_cost_scores(df, vendors):
@@ -73,7 +90,7 @@ def calculate_total_score_calculation(df, vendors, cost_weight, shipping_speed_w
     for vendor in vendors:
         total_score_col = f"total_score_{vendor}"
         df[total_score_col] = (df[f'cost_score_{vendor}'] * int(cost_weight) / 100
-                               + df[f'shipping_speed_score_{vendor}'] * int(shipping_speed_weight) / 100
+                               + df[f'shipping_score_{vendor}'] * int(shipping_speed_weight) / 100
                                + df[f'vendor_trust_score_{vendor}'] * int(vendor_trust_weight) / 100
                                + df[f'returnability_score_{vendor}'] * int(returnability_weight) / 100) * 100
     return df
@@ -98,8 +115,14 @@ def generate_sample_data(df_for_sample, number_of_rows, cost_weight,
 
     # Add scores to the dataframe
     df_sample = add_vendor_scores(df_sample, vendors_attributes, vendors_list)
+    
     # Calculate cost scores
     df_sample = calculate_cost_scores(df_sample, vendors_list)
+
+    # Calculate shipping score
+    df_sample = calculate_shipping_scores(df_sample, vendors_list, same_day_parameter, day_1_parameter, day_2_parameter, day_3_parameter, day_4_parameter)
+
+
     # Calculate total scores
     df_sample = calculate_total_score_calculation(df_sample, vendors_list, cost_weight, shipping_speed_weight,
                                                   returnability_weight, vendor_trust_weight)
